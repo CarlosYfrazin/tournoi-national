@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournoi National de Jeu Vidéo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="logo" href="index.html">
+      <div class="logo-icon">🏆</div>
+      <div class="logo-text">
+        <h1>Tournoi National</h1>
+        <p>Jeu Vidéo · Haiti</p>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link active" data-page="home"        href="index.html">Accueil</a>
+      <a class="nav-link"        data-page="inscription" href="inscription.html">Inscription</a>
+      <a class="nav-link"        data-page="matches"     href="matches.html">Matchs</a>
+      <a class="nav-link"        data-page="classement"  href="classement.html">Classement</a>
+      <a class="nav-link"        data-page="regles"      href="regles.html">Règles</a>
+      <a class="nav-link admin"  data-page="admin"       href="admin.html">⚡ Admin</a>
+    </div>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- HERO -->
+  <div style="text-align:center;padding:40px 0 50px;">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:50px;padding:6px 20px;font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;font-family:'Share Tech Mono',monospace;">
+      🎮 Saison 2025 · En cours
+    </div>
+    <h2 style="font-family:'Rajdhani',sans-serif;font-size:clamp(34px,6vw,68px);font-weight:700;letter-spacing:2px;text-transform:uppercase;line-height:1.05;">
+      Tournoi <span style="color:var(--accent);">National</span><br>
+      de Jeu <span style="color:var(--accent2);">Vidéo</span>
+    </h2>
+    <p style="margin-top:18px;color:var(--text2);font-size:16px;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.6;">
+      Compétition officielle eFootball & Dream League Soccer. Inscris ton équipe et prouve que tu es le meilleur !
+    </p>
+    <div style="display:flex;justify-content:center;gap:48px;margin-top:40px;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div id="stat-ef" style="font-family:'Rajdhani',sans-serif;font-size:40px;font-weight:700;color:var(--accent);line-height:1;">—</div>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;">Équipes eFootball</div>
+      </div>
+      <div style="text-align:center;">
+        <div id="stat-dls" style="font-family:'Rajdhani',sans-serif;font-size:40px;font-weight:700;color:var(--accent2);line-height:1;">—</div>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;">Équipes DLS</div>
+      </div>
+      <div style="text-align:center;">
+        <div id="stat-matches" style="font-family:'Rajdhani',sans-serif;font-size:40px;font-weight:700;color:var(--green);line-height:1;">—</div>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;">Matchs terminés</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME CARDS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;">
+    <a href="inscription.html" style="text-decoration:none;">
+      <div class="card" style="border-color:rgba(0,212,255,0.25);transition:all 0.2s;cursor:pointer;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='rgba(0,212,255,0.25)'">
+        <div style="font-size:40px;margin-bottom:14px;">⚽</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--accent);">eFootball</div>
+        <div id="card-ef-count" style="color:var(--text3);font-size:13px;margin-top:6px;">Chargement...</div>
+        <div style="color:var(--accent);font-size:13px;margin-top:16px;font-weight:700;letter-spacing:1px;">S'INSCRIRE →</div>
+      </div>
+    </a>
+    <a href="inscription.html?game=DLS" style="text-decoration:none;">
+      <div class="card" style="border-color:rgba(255,107,0,0.25);transition:all 0.2s;cursor:pointer;" onmouseenter="this.style.borderColor='var(--accent2)'" onmouseleave="this.style.borderColor='rgba(255,107,0,0.25)'">
+        <div style="font-size:40px;margin-bottom:14px;">🥅</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--accent2);">Dream League Soccer</div>
+        <div id="card-dls-count" style="color:var(--text3);font-size:13px;margin-top:6px;">Chargement...</div>
+        <div style="color:var(--accent2);font-size:13px;margin-top:16px;font-weight:700;letter-spacing:1px;">S'INSCRIRE →</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- RECENT MATCHES -->
+  <div class="card">
+    <div class="card-title"><div class="dot dot-green"></div>Derniers résultats</div>
+    <div id="recent-matches"><div class="loader">Chargement</div></div>
+  </div>
+
+  <!-- FIREBASE STATUS -->
+  <div style="text-align:center;margin-top:24px;">
+    <span class="fb-status">
+      <span class="fb-dot"></span>
+      <span class="fb-status-text">Connexion Firebase...</span>
+    </span>
+  </div>
+
+</main>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script>
+(async () => {
+  try {
+    await importInitialPlayers();
+
+    const [ef, dls, matches] = await Promise.all([
+      getPlayers('eFootball'),
+      getPlayers('DLS'),
+      getMatches()
+    ]);
+
+    document.getElementById('stat-ef').textContent = ef.length;
+    document.getElementById('stat-dls').textContent = dls.length;
+    document.getElementById('stat-matches').textContent = matches.filter(m => m.status === 'done').length;
+    document.getElementById('card-ef-count').textContent = `${ef.length} équipes inscrites`;
+    document.getElementById('card-dls-count').textContent = `${dls.length} équipes inscrites`;
+
+    const done = matches.filter(m => m.status === 'done').slice(0, 5);
+    const el = document.getElementById('recent-matches');
+    if (!done.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><p>Aucun match terminé pour le moment</p></div>';
+    } else {
+      el.innerHTML = done.map(m => `
+        <div class="match-card done">
+          <div class="match-teams">
+            <div class="team-name">${m.team1}<br><span class="id-badge">${m.id1}</span></div>
+            <div class="score-display">${m.score1} — ${m.score2}</div>
+            <div class="team-name">${m.team2}<br><span class="id-badge">${m.id2}</span></div>
+          </div>
+          <div class="match-meta">
+            <span class="status-badge status-done">✅ Terminé</span>
+            <div style="margin-top:5px;">${m.game} · ${m.round || 'Phase de groupes'}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    console.error(e);
+    document.getElementById('recent-matches').innerHTML = '<div class="alert alert-error show"><div class="alert-icon">⚠️</div><div>Erreur de connexion Firebase. Vérifie ta configuration.</div></div>';
+  }
+})();
+</script>
+</body>
+</html>
