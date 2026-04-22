@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matchs — Tournoi National</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="logo" href="index.html"><div class="logo-icon">🏆</div><div class="logo-text"><h1>Tournoi National</h1><p>Jeu Vidéo · Haiti</p></div></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link" href="inscription.html">Inscription</a>
+      <a class="nav-link active" href="matches.html">Matchs</a>
+      <a class="nav-link" href="classement.html">Classement</a>
+      <a class="nav-link" href="regles.html">Règles</a>
+      <a class="nav-link admin" href="admin.html">⚡ Admin</a>
+    </div>
+  </div>
+</nav>
+<main class="main">
+  <div class="section-header">
+    <div class="section-title">⚔️ Matchs</div>
+    <span class="fb-status"><span class="fb-dot"></span><span class="fb-status-text">Firebase</span></span>
+  </div>
+
+  <div class="game-tabs" id="filter-tabs">
+    <button class="game-tab ef active" onclick="filterGame('eFootball',this)"><div class="tab-icon">⚽</div><div class="tab-name">eFootball</div></button>
+    <button class="game-tab dls" onclick="filterGame('DLS',this)"><div class="tab-icon">🥅</div><div class="tab-name">DLS</div></button>
+  </div>
+
+  <div id="matches-container"><div class="loader">Chargement</div></div>
+
+  <div class="card" style="margin-top:28px;">
+    <div class="card-title"><div class="dot dot-green"></div>Envoyer ton résultat</div>
+    <div class="wa-box" onclick="window.open('https://wa.me/50900000000?text=Non+ekip+1+vs+Non+ekip+2%0AScore+%3A+2-1%0AJeu+%3A+eFootball%0A%5Bjoin+screenshot%5D','_blank')">
+      <div class="wa-icon">💬</div>
+      <div class="wa-text">
+        <h4>Envoyer via WhatsApp</h4>
+        <p>Voye screenshot rezilta a bay admin</p>
+      </div>
+      <div style="margin-left:auto;color:#25d366;font-size:22px;">→</div>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Format obligatoire :</div>
+      <div style="background:var(--bg3);border-radius:12px;padding:18px;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text2);line-height:2;border-left:3px solid #25d366;">
+        Team Alpha vs Team Beta<br>
+        Score : 2-1<br>
+        Jeu : eFootball<br>
+        [Screenshot]
+      </div>
+    </div>
+  </div>
+</main>
+<div class="toast-container" id="toast-container"></div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script>
+  let currentGame = 'eFootball';
+
+  function filterGame(game, el) {
+    currentGame = game;
+    document.querySelectorAll('#filter-tabs .game-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    load();
+  }
+
+  async function load() {
+    const el = document.getElementById('matches-container');
+    el.innerHTML = '<div class="loader">Chargement</div>';
+    try {
+      const matches = await getMatches(currentGame);
+      if (!matches.length) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚔️</div><p>Aucun match programmé pour le moment</p></div>';
+        return;
+      }
+      el.innerHTML = matches.map(m => {
+        const done = m.status === 'done';
+        const score = done
+          ? `<div class="score-display">${m.score1} — ${m.score2}</div>`
+          : `<div class="score-display" style="font-size:18px;color:var(--text3);">VS</div>`;
+        const winner = done
+          ? `<div style="color:var(--gold);font-size:12px;font-weight:700;margin-top:6px;">🏆 ${m.score1 > m.score2 ? m.team1 : m.score2 > m.score1 ? m.team2 : 'Match nul'}</div>` : '';
+        return `
+          <div class="match-card ${done ? 'done' : 'pending'}">
+            <div style="flex:1;min-width:180px;">
+              <div class="match-teams">
+                <div class="team-name">${m.team1}<br><span class="id-badge">${m.id1}</span></div>
+                ${score}
+                <div class="team-name">${m.team2}<br><span class="id-badge">${m.id2}</span></div>
+              </div>
+              ${winner}
+            </div>
+            <div class="match-meta">
+              <span class="status-badge ${done ? 'status-done' : 'status-pending'}">${done ? '✅ Terminé' : '⏳ En attente'}</span>
+              <div>${m.game} · ${m.round || 'Phase de groupes'}</div>
+              ${m.date ? `<div>📅 ${new Date(m.date).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      el.innerHTML = '<div class="alert alert-error show"><div class="alert-icon">⚠️</div><div>Erreur de chargement</div></div>';
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

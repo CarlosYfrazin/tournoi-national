@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Tournoi National</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-tabs { display:flex; gap:4px; background:var(--bg3); border-radius:12px; padding:4px; margin-bottom:28px; overflow-x:auto; }
+    .admin-tab { flex:1; padding:10px 14px; border-radius:9px; border:none; background:transparent; color:var(--text3); font-family:'Exo 2',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+    .admin-tab.active { background:var(--card2); color:var(--accent2); box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    .dash-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:14px; margin-bottom:28px; }
+    .dash-stat { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:center; }
+    .dash-num { font-family:'Rajdhani',sans-serif; font-size:38px; font-weight:700; line-height:1; }
+    .dash-lbl { font-size:10px; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; margin-top:6px; }
+    .score-row { display:flex; align-items:center; gap:12px; }
+    .score-row input { max-width:72px; text-align:center; font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; padding:10px 8px; }
+    .tab-section { display:none; }
+    .tab-section.active { display:block; }
+    .filter-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .filter-bar input, .filter-bar select { max-width:200px; }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="logo" href="index.html"><div class="logo-icon">🏆</div><div class="logo-text"><h1>Tournoi National</h1><p>Jeu Vidéo · Haiti</p></div></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link" href="inscription.html">Inscription</a>
+      <a class="nav-link" href="matches.html">Matchs</a>
+      <a class="nav-link" href="classement.html">Classement</a>
+      <a class="nav-link" href="regles.html">Règles</a>
+      <a class="nav-link admin active" href="admin.html">⚡ Admin</a>
+    </div>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- LOGIN -->
+  <div id="login-view">
+    <div style="max-width:380px;margin:60px auto;">
+      <div style="text-align:center;margin-bottom:32px;">
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,var(--accent2),#cc4400);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;box-shadow:var(--glow2);">⚡</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--accent2);letter-spacing:2px;">ESPACE ADMIN</div>
+        <p style="color:var(--text3);font-size:13px;margin-top:8px;">Accès restreint · Administrateur uniquement</p>
+      </div>
+      <div class="card">
+        <div id="alert-login" class="alert alert-error"><div class="alert-icon">⚠️</div><div id="alert-login-msg"></div></div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Mot de passe admin</label>
+          <input type="password" id="pw-input" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn btn-orange btn-full" onclick="doLogin()">🔐 Connexion Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" style="display:none;">
+    <div class="section-header">
+      <div class="section-title">⚡ Dashboard Admin</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="fb-status"><span class="fb-dot"></span><span class="fb-status-text">Firebase</span></span>
+        <button class="btn btn-danger btn-sm" onclick="doLogout()">Déconnexion</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="dash-grid">
+      <div class="dash-stat"><div class="dash-num" id="d-total" style="color:var(--accent);">—</div><div class="dash-lbl">Total joueurs</div></div>
+      <div class="dash-stat"><div class="dash-num" id="d-ef"    style="color:var(--accent);">—</div><div class="dash-lbl">eFootball</div></div>
+      <div class="dash-stat"><div class="dash-num" id="d-dls"   style="color:var(--accent2);">—</div><div class="dash-lbl">DLS</div></div>
+      <div class="dash-stat"><div class="dash-num" id="d-done"  style="color:var(--green);">—</div><div class="dash-lbl">Matchs terminés</div></div>
+      <div class="dash-stat"><div class="dash-num" id="d-pend"  style="color:var(--gold);">—</div><div class="dash-lbl">En attente</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="showTab('players')">👥 Joueurs</button>
+      <button class="admin-tab"        onclick="showTab('matches')">⚔️ Matchs</button>
+      <button class="admin-tab"        onclick="showTab('results')">📊 Résultats</button>
+      <button class="admin-tab"        onclick="showTab('add')">➕ Ajouter</button>
+    </div>
+
+    <!-- TAB: PLAYERS -->
+    <div id="tab-players" class="tab-section active">
+      <div class="filter-bar">
+        <input type="text" id="f-search" placeholder="Rechercher équipe / ID..." oninput="loadPlayers()">
+        <select id="f-game" onchange="loadPlayers()">
+          <option value="">Tous les jeux</option>
+          <option value="eFootball">eFootball</option>
+          <option value="DLS">DLS</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Équipe</th><th>Jeu</th><th>Note</th><th>Connexion</th><th>WhatsApp</th><th>Actions</th></tr></thead>
+          <tbody id="admin-players"><tr><td colspan="7"><div class="loader">Chargement</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: MATCHES -->
+    <div id="tab-matches" class="tab-section">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title"><div class="dot dot-orange"></div>Créer un match</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Jeu</label>
+            <select id="nm-game" onchange="loadMatchTeams()">
+              <option value="eFootball">eFootball</option>
+              <option value="DLS">DLS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Round / Phase</label>
+            <input type="text" id="nm-round" placeholder="Ex: 1/8 de finale">
+          </div>
+          <div class="form-group">
+            <label>Équipe 1</label>
+            <select id="nm-t1"></select>
+          </div>
+          <div class="form-group">
+            <label>Équipe 2</label>
+            <select id="nm-t2"></select>
+          </div>
+          <div class="form-group full">
+            <label>Date et heure prévues</label>
+            <input type="datetime-local" id="nm-date">
+          </div>
+        </div>
+        <button class="btn btn-orange" style="margin-top:16px;" onclick="doCreateMatch()">⚔️ Créer le match</button>
+      </div>
+      <div id="admin-matches-list"><div class="loader">Chargement</div></div>
+    </div>
+
+    <!-- TAB: RESULTS -->
+    <div id="tab-results" class="tab-section">
+      <div class="card">
+        <div class="card-title"><div class="dot dot-green"></div>Valider un résultat</div>
+        <p style="color:var(--text3);font-size:14px;margin-bottom:20px;">Sélectionne un match en attente, puis entre le score vérifié depuis le screenshot WhatsApp.</p>
+        <div class="form-group" style="margin-bottom:18px;">
+          <label>Match en attente</label>
+          <select id="res-select" onchange="onResSelect()">
+            <option value="">Sélectionner un match...</option>
+          </select>
+        </div>
+        <div id="res-form" style="display:none;">
+          <div style="background:var(--bg3);border-radius:12px;padding:22px;margin-bottom:18px;">
+            <div id="res-teams" style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:18px;"></div>
+            <label style="display:block;margin-bottom:10px;">Score</label>
+            <div class="score-row">
+              <input type="number" id="rs1" min="0" max="99" value="0">
+              <div style="font-family:'Rajdhani',sans-serif;font-size:26px;color:var(--text3);">—</div>
+              <input type="number" id="rs2" min="0" max="99" value="0">
+            </div>
+          </div>
+          <button class="btn btn-success" onclick="doValidate()">✅ Valider et enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ADD -->
+    <div id="tab-add" class="tab-section">
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3);"></div>Ajouter un joueur manuellement</div>
+        <div id="alert-add" class="alert alert-error"><div class="alert-icon">⚠️</div><div id="alert-add-msg"></div></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom d'équipe *</label>
+            <input type="text" id="add-team" placeholder="Nom unique" maxlength="30">
+          </div>
+          <div class="form-group">
+            <label>Jeu *</label>
+            <select id="add-game">
+              <option value="eFootball">eFootball</option>
+              <option value="DLS">DLS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Note</label>
+            <input type="number" id="add-rating" placeholder="Ex: 3200">
+          </div>
+          <div class="form-group">
+            <label>Connexion</label>
+            <select id="add-connexion">
+              <option value="">—</option>
+              <option value="Natcom">Natcom</option>
+              <option value="Digicel">Digicel</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>WhatsApp</label>
+            <input type="tel" id="add-wa" placeholder="+509 XXXX XXXX">
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="doAddPlayer()">➕ Ajouter le joueur</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL EDIT -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier le joueur</div>
+    <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
+    <input type="hidden" id="edit-docid">
+    <input type="hidden" id="edit-game">
+    <div class="form-group" style="margin-bottom:14px;"><label>Nom d'équipe</label><input type="text" id="edit-team" maxlength="30"></div>
+    <div class="form-group" style="margin-bottom:14px;"><label>Note</label><input type="number" id="edit-rating"></div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Connexion</label>
+      <select id="edit-connexion"><option value="">—</option><option value="Natcom">Natcom</option><option value="Digicel">Digicel</option><option value="Autre">Autre</option></select>
+    </div>
+    <div class="form-group" style="margin-bottom:20px;"><label>WhatsApp</label><input type="tel" id="edit-wa"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="doSaveEdit()">💾 Sauvegarder</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DELETE -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-title" style="color:var(--red);">🗑️ Supprimer ?</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:6px;">Joueur : <strong id="del-name"></strong></p>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:24px;">Cette action est irréversible.</p>
+    <input type="hidden" id="del-docid">
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-danger" onclick="doDelete()">🗑️ Supprimer</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script>
+// ─── AUTH ───────────────────────────────────
+function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PASSWORD_DEFAULT) {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('dashboard').style.display  = 'block';
+    refreshAll();
+  } else {
+    showAlert('alert-login', 'Mot de passe incorrect. Accès refusé.');
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-view').style.display = 'block';
+  document.getElementById('dashboard').style.display  = 'none';
+  document.getElementById('pw-input').value = '';
+}
+
+// ─── TABS ────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  [...document.querySelectorAll('.admin-tab')].find(b => b.textContent.toLowerCase().includes(name.slice(0,4))).classList.add('active');
+  if (name === 'matches') { loadMatchTeams(); loadAdminMatches(); }
+  if (name === 'results') loadResultSelect();
+}
+
+// ─── REFRESH ALL ─────────────────────────────
+async function refreshAll() {
+  const [allP, allM] = await Promise.all([getPlayers(), getMatches()]);
+  const ef = allP.filter(p => p.game === 'eFootball').length;
+  const dls= allP.filter(p => p.game === 'DLS').length;
+  document.getElementById('d-total').textContent = allP.length;
+  document.getElementById('d-ef').textContent    = ef;
+  document.getElementById('d-dls').textContent   = dls;
+  document.getElementById('d-done').textContent  = allM.filter(m => m.status === 'done').length;
+  document.getElementById('d-pend').textContent  = allM.filter(m => m.status === 'pending').length;
+  loadPlayers();
+}
+
+// ─── PLAYERS ─────────────────────────────────
+async function loadPlayers() {
+  const tbody  = document.getElementById('admin-players');
+  const search = (document.getElementById('f-search')?.value || '').toLowerCase();
+  const game   = document.getElementById('f-game')?.value || '';
+  tbody.innerHTML = '<tr><td colspan="7"><div class="loader">Chargement</div></td></tr>';
+  try {
+    let list = await getPlayers(game || null);
+    if (search) list = list.filter(p => p.team.toLowerCase().includes(search) || p.id.toLowerCase().includes(search));
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">Aucun joueur trouvé</td></tr>'; return; }
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td><span class="id-badge">${p.id}</span></td>
+        <td style="font-weight:700;color:var(--text);">${p.team}</td>
+        <td><span class="game-badge ${p.game==='eFootball'?'badge-ef':'badge-dls'}">${p.game}</span></td>
+        <td style="color:var(--accent);">${p.rating||'—'}</td>
+        <td style="color:var(--text3);">${p.connexion||'—'}</td>
+        <td style="color:var(--text3);">${p.wa||'—'}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" style="border:1px solid var(--accent);color:var(--accent);" onclick="openEdit('${p.docId}','${p.team.replace(/'/g,"\\'")}','${p.rating||''}','${p.connexion||''}','${p.wa||''}','${p.game}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="openDelete('${p.docId}','${p.team.replace(/'/g,"\\'")}')">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--red);padding:20px;">Erreur</td></tr>'; }
+}
+
+function openEdit(docId, team, rating, connexion, wa, game) {
+  document.getElementById('edit-docid').value     = docId;
+  document.getElementById('edit-team').value      = team;
+  document.getElementById('edit-rating').value    = rating;
+  document.getElementById('edit-connexion').value = connexion;
+  document.getElementById('edit-wa').value        = wa;
+  document.getElementById('edit-game').value      = game;
+  openModal('modal-edit');
+}
+
+async function doSaveEdit() {
+  const docId     = document.getElementById('edit-docid').value;
+  const team      = document.getElementById('edit-team').value.trim();
+  const game      = document.getElementById('edit-game').value;
+  const rating    = document.getElementById('edit-rating').value;
+  const connexion = document.getElementById('edit-connexion').value;
+  const wa        = document.getElementById('edit-wa').value.trim();
+  if (!team) { toast('Le nom ne peut pas être vide', 'error'); return; }
+  try {
+    await updatePlayer(docId, { team, rating, connexion, wa });
+    closeModal('modal-edit');
+    toast('Joueur modifié !', 'success');
+    loadPlayers(); refreshAll();
+  } catch(e) { toast('Erreur lors de la modification', 'error'); }
+}
+
+function openDelete(docId, name) {
+  document.getElementById('del-docid').value = docId;
+  document.getElementById('del-name').textContent = name;
+  openModal('modal-delete');
+}
+
+async function doDelete() {
+  const docId = document.getElementById('del-docid').value;
+  try {
+    await deletePlayer(docId);
+    closeModal('modal-delete');
+    toast('Joueur supprimé.', 'success');
+    loadPlayers(); refreshAll();
+  } catch(e) { toast('Erreur lors de la suppression', 'error'); }
+}
+
+async function doAddPlayer() {
+  const team      = document.getElementById('add-team').value.trim();
+  const game      = document.getElementById('add-game').value;
+  const rating    = document.getElementById('add-rating').value;
+  const connexion = document.getElementById('add-connexion').value;
+  const wa        = document.getElementById('add-wa').value.trim();
+  hideAlert('alert-add');
+  if (!team) { showAlert('alert-add', 'Tanpri antre non ekip la.'); return; }
+  try {
+    const id = await registerPlayer({ team, game, rating, connexion, dispo:'', wa });
+    document.getElementById('add-team').value = '';
+    document.getElementById('add-rating').value = '';
+    document.getElementById('add-wa').value = '';
+    toast(`Joueur "${team}" ajouté ! ID: ${id}`, 'success');
+    loadPlayers(); refreshAll();
+  } catch(e) {
+    if (e.message === 'DUPLICATE') showAlert('alert-add', 'Non ekip sa deja egziste, tanpri chwazi yon lòt.');
+    else { showAlert('alert-add', 'Erreur lors de l\'ajout.'); console.error(e); }
+  }
+}
+
+// ─── MATCHES ─────────────────────────────────
+let allPlayersCache = [];
+
+async function loadMatchTeams() {
+  const game = document.getElementById('nm-game')?.value || 'eFootball';
+  const players = await getPlayers(game);
+  allPlayersCache = players;
+  const opts = players.map(p => `<option value="${p.docId}|${p.id}|${p.team}">${p.team} (${p.id})</option>`).join('');
+  document.getElementById('nm-t1').innerHTML = opts;
+  document.getElementById('nm-t2').innerHTML = opts;
+}
+
+async function doCreateMatch() {
+  const game  = document.getElementById('nm-game').value;
+  const round = document.getElementById('nm-round').value.trim();
+  const t1val = document.getElementById('nm-t1').value;
+  const t2val = document.getElementById('nm-t2').value;
+  const date  = document.getElementById('nm-date').value;
+  if (!t1val || !t2val) { toast('Sélectionne deux équipes', 'error'); return; }
+  const [docId1, id1, team1] = t1val.split('|');
+  const [docId2, id2, team2] = t2val.split('|');
+  if (docId1 === docId2) { toast('Les deux équipes doivent être différentes !', 'error'); return; }
+  try {
+    await createMatch({ game, round, id1, id2, docId1, docId2, team1, team2, date });
+    toast(`Match créé : ${team1} vs ${team2}`, 'success');
+    loadAdminMatches(); refreshAll(); loadResultSelect();
+  } catch(e) { toast('Erreur lors de la création du match', 'error'); console.error(e); }
+}
+
+async function loadAdminMatches() {
+  const el = document.getElementById('admin-matches-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loader">Chargement</div>';
+  try {
+    const matches = await getMatches();
+    if (!matches.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚔️</div><p>Aucun match créé</p></div>'; return; }
+    el.innerHTML = matches.map(m => {
+      const done = m.status === 'done';
+      return `
+        <div class="match-card ${done?'done':'pending'}">
+          <div style="flex:1;min-width:180px;">
+            <div class="match-teams">
+              <div class="team-name">${m.team1}<br><span class="id-badge">${m.id1}</span></div>
+              ${done ? `<div class="score-display">${m.score1} — ${m.score2}</div>` : '<div class="score-display" style="font-size:16px;color:var(--text3);">VS</div>'}
+              <div class="team-name">${m.team2}<br><span class="id-badge">${m.id2}</span></div>
+            </div>
+            ${done ? `<div style="color:var(--gold);font-size:12px;font-weight:700;margin-top:6px;">🏆 ${m.score1>m.score2?m.team1:m.score2>m.score1?m.team2:'Match nul'}</div>` : ''}
+          </div>
+          <div class="match-meta">
+            <span class="status-badge ${done?'status-done':'status-pending'}">${done?'✅ Terminé':'⏳ En attente'}</span>
+            <div>${m.game} · ${m.round||'Phase de groupes'}</div>
+            ${m.date?`<div>📅 ${new Date(m.date).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}</div>`:''}
+            ${!done?`<button class="btn btn-danger btn-sm" style="margin-top:8px;" onclick="doDeleteMatch('${m.docId}')">🗑️ Supprimer</button>`:''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div style="color:var(--red);padding:20px;">Erreur de chargement</div>'; }
+}
+
+async function doDeleteMatch(docId) {
+  if (!confirm('Supprimer ce match ?')) return;
+  try {
+    await deleteMatch(docId);
+    toast('Match supprimé.', 'success');
+    loadAdminMatches(); refreshAll(); loadResultSelect();
+  } catch(e) { toast('Erreur', 'error'); }
+}
+
+// ─── RESULTS ─────────────────────────────────
+let pendingMatchesCache = [];
+
+async function loadResultSelect() {
+  const sel = document.getElementById('res-select');
+  if (!sel) return;
+  document.getElementById('res-form').style.display = 'none';
+  try {
+    const all = await getMatches();
+    pendingMatchesCache = all.filter(m => m.status === 'pending');
+    sel.innerHTML = '<option value="">Sélectionner un match...</option>' +
+      pendingMatchesCache.map(m => `<option value="${m.docId}">${m.team1} vs ${m.team2} (${m.game})</option>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+function onResSelect() {
+  const docId = document.getElementById('res-select').value;
+  const form  = document.getElementById('res-form');
+  if (!docId) { form.style.display = 'none'; return; }
+  const m = pendingMatchesCache.find(x => x.docId === docId);
+  if (!m) return;
+  document.getElementById('res-teams').textContent = `${m.team1}  ⚔️  ${m.team2}`;
+  document.getElementById('rs1').value = 0;
+  document.getElementById('rs2').value = 0;
+  form.style.display = 'block';
+}
+
+async function doValidate() {
+  const docId = document.getElementById('res-select').value;
+  const s1    = parseInt(document.getElementById('rs1').value) || 0;
+  const s2    = parseInt(document.getElementById('rs2').value) || 0;
+  const m     = pendingMatchesCache.find(x => x.docId === docId);
+  if (!m) return;
+  try {
+    await validateMatchResult(docId, s1, s2, m.docId1, m.docId2);
+    toast(`Résultat validé : ${m.team1} ${s1} — ${s2} ${m.team2}`, 'success');
+    loadResultSelect(); loadAdminMatches(); refreshAll();
+  } catch(e) { toast('Erreur lors de la validation', 'error'); console.error(e); }
+}
+
+// ─── MODAL ───────────────────────────────────
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

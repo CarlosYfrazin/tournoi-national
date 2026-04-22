@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription — Tournoi National</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="logo" href="index.html">
+      <div class="logo-icon">🏆</div>
+      <div class="logo-text"><h1>Tournoi National</h1><p>Jeu Vidéo · Haiti</p></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link active" href="inscription.html">Inscription</a>
+      <a class="nav-link" href="matches.html">Matchs</a>
+      <a class="nav-link" href="classement.html">Classement</a>
+      <a class="nav-link" href="regles.html">Règles</a>
+      <a class="nav-link admin" href="admin.html">⚡ Admin</a>
+    </div>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="section-header">
+    <div class="section-title">📝 Inscription au tournoi</div>
+    <span class="fb-status"><span class="fb-dot"></span><span class="fb-status-text">Firebase</span></span>
+  </div>
+
+  <!-- GAME SELECTOR -->
+  <div class="game-tabs" id="game-tabs">
+    <button class="game-tab ef active" onclick="selectGame('eFootball', this)">
+      <div class="tab-icon">⚽</div>
+      <div class="tab-name">eFootball</div>
+    </button>
+    <button class="game-tab dls" onclick="selectGame('DLS', this)">
+      <div class="tab-icon">🥅</div>
+      <div class="tab-name">Dream League Soccer</div>
+    </button>
+  </div>
+
+  <!-- FORM -->
+  <div class="card">
+    <div class="card-title"><div class="dot"></div>Formulaire d'inscription</div>
+
+    <div id="alert-form" class="alert alert-error">
+      <div class="alert-icon">⚠️</div>
+      <div id="alert-form-msg"></div>
+    </div>
+    <div id="alert-ok" class="alert alert-success">
+      <div class="alert-icon">✅</div>
+      <div id="alert-ok-msg"></div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nom d'équipe *</label>
+        <input type="text" id="inp-team" placeholder="Ex: Team Alpha" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label>Jeu sélectionné</label>
+        <input type="text" id="inp-game" readonly value="eFootball">
+      </div>
+      <div class="form-group">
+        <label>Note (eFootball / DLS)</label>
+        <input type="number" id="inp-rating" placeholder="Ex: 3200" min="0" max="9999">
+      </div>
+      <div class="form-group">
+        <label>Connexion Internet</label>
+        <select id="inp-connexion">
+          <option value="">Sélectionner</option>
+          <option value="Natcom">Natcom</option>
+          <option value="Digicel">Digicel</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Disponibilité</label>
+        <input type="text" id="inp-dispo" placeholder="Ex: Soir 18h–22h, weekends">
+      </div>
+      <div class="form-group full">
+        <label>Numéro WhatsApp *</label>
+        <input type="tel" id="inp-wa" placeholder="Ex: +509 XXXX XXXX">
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-register" onclick="inscrire()">
+      🎮 Enregistrer mon équipe
+    </button>
+
+    <div class="locked-notice">
+      🔒 Apre ou klike "Enregistrer", enskripsyon ou bloke definitvman. Ou pa kapab modifye li ankò.
+    </div>
+  </div>
+
+  <!-- LISTE DES INSCRITS -->
+  <div class="card">
+    <div class="card-title"><div class="dot dot-orange"></div>Équipes inscrites</div>
+
+    <div class="game-tabs" id="list-tabs">
+      <button class="game-tab ef active" onclick="filterList('eFootball', this)">
+        <div class="tab-icon">⚽</div><div class="tab-name">eFootball</div>
+      </button>
+      <button class="game-tab dls" onclick="filterList('DLS', this)">
+        <div class="tab-icon">🥅</div><div class="tab-name">DLS</div>
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>ID</th><th>Équipe</th><th>Note</th><th>Connexion</th><th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="player-list"><tr><td colspan="6"><div class="loader">Chargement</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script>
+  let currentGame = 'eFootball';
+  let listGame    = 'eFootball';
+
+  // Pré-sélection via URL param
+  const urlGame = new URLSearchParams(location.search).get('game');
+  if (urlGame === 'DLS') {
+    currentGame = 'DLS';
+    document.getElementById('inp-game').value = 'DLS';
+    document.querySelectorAll('#game-tabs .game-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#game-tabs .game-tab')[1].classList.add('active');
+  }
+
+  function selectGame(game, el) {
+    currentGame = game;
+    document.getElementById('inp-game').value = game;
+    document.querySelectorAll('#game-tabs .game-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function filterList(game, el) {
+    listGame = game;
+    document.querySelectorAll('#list-tabs .game-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    loadList();
+  }
+
+  async function loadList() {
+    const tbody = document.getElementById('player-list');
+    tbody.innerHTML = '<tr><td colspan="6"><div class="loader">Chargement</div></td></tr>';
+    try {
+      const players = await getPlayers(listGame);
+      if (!players.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px;">Aucune équipe inscrite</td></tr>';
+        return;
+      }
+      tbody.innerHTML = players.map((p, i) => `
+        <tr>
+          <td style="color:var(--text3);font-size:12px;">${i + 1}</td>
+          <td><span class="id-badge">${p.id}</span></td>
+          <td style="font-weight:700;color:var(--text);">${p.team}</td>
+          <td style="color:var(--accent);">${p.rating || '—'}</td>
+          <td style="color:var(--text3);">${p.connexion || '—'}</td>
+          <td><span class="status-badge status-locked">🔒 Verrouillé</span></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--red);padding:20px;">Erreur de chargement</td></tr>';
+    }
+  }
+
+  async function inscrire() {
+    const team     = document.getElementById('inp-team').value.trim();
+    const game     = document.getElementById('inp-game').value;
+    const rating   = document.getElementById('inp-rating').value.trim();
+    const connexion= document.getElementById('inp-connexion').value;
+    const dispo    = document.getElementById('inp-dispo').value.trim();
+    const wa       = document.getElementById('inp-wa').value.trim();
+
+    hideAlert('alert-form');
+    hideAlert('alert-ok');
+
+    if (!team) { showAlert('alert-form', 'Tanpri antre non ekip ou a.'); return; }
+    if (!wa)   { showAlert('alert-form', 'Tanpri antre nimewo WhatsApp ou a.'); return; }
+
+    const btn = document.getElementById('btn-register');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement...';
+
+    try {
+      const id = await registerPlayer({ team, game, rating, connexion, dispo, wa });
+      showAlert('alert-ok', `Enskripsyon ou anrejistre avèk siksè ! 🎉 ID ou : ${id} — Ou pa kapab modifye li ankò.`);
+      document.getElementById('inp-team').value = '';
+      document.getElementById('inp-rating').value = '';
+      document.getElementById('inp-connexion').value = '';
+      document.getElementById('inp-dispo').value = '';
+      document.getElementById('inp-wa').value = '';
+      toast(`Équipe "${team}" inscrite ! ID: ${id}`, 'success');
+      loadList();
+    } catch (e) {
+      if (e.message === 'DUPLICATE') {
+        showAlert('alert-form', 'Non ekip sa deja egziste, tanpri chwazi yon lòt.');
+      } else {
+        showAlert('alert-form', 'Erreur lors de l\'inscription. Réessaie.');
+        console.error(e);
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🎮 Enregistrer mon équipe';
+    }
+  }
+
+  loadList();
+</script>
+</body>
+</html>

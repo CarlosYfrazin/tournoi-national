@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classement — Tournoi National</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="logo" href="index.html"><div class="logo-icon">🏆</div><div class="logo-text"><h1>Tournoi National</h1><p>Jeu Vidéo · Haiti</p></div></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link" href="inscription.html">Inscription</a>
+      <a class="nav-link" href="matches.html">Matchs</a>
+      <a class="nav-link active" href="classement.html">Classement</a>
+      <a class="nav-link" href="regles.html">Règles</a>
+      <a class="nav-link admin" href="admin.html">⚡ Admin</a>
+    </div>
+  </div>
+</nav>
+<main class="main">
+  <div class="section-header">
+    <div class="section-title">🏆 Classement</div>
+    <span class="fb-status"><span class="fb-dot"></span><span class="fb-status-text">Firebase</span></span>
+  </div>
+  <div class="game-tabs" id="filter-tabs">
+    <button class="game-tab ef active" onclick="filterGame('eFootball',this)"><div class="tab-icon">⚽</div><div class="tab-name">eFootball</div></button>
+    <button class="game-tab dls" onclick="filterGame('DLS',this)"><div class="tab-icon">🥅</div><div class="tab-name">DLS</div></button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Équipe</th><th>ID</th><th>J</th><th>V</th><th>N</th><th>D</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr>
+        </thead>
+        <tbody id="classement-body"><tr><td colspan="11"><div class="loader">Chargement</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script>
+  let currentGame = 'eFootball';
+  const medals = ['🥇','🥈','🥉'];
+
+  function filterGame(game, el) {
+    currentGame = game;
+    document.querySelectorAll('#filter-tabs .game-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    load();
+  }
+
+  async function load() {
+    const tbody = document.getElementById('classement-body');
+    tbody.innerHTML = '<tr><td colspan="11"><div class="loader">Chargement</div></td></tr>';
+    try {
+      const players = (await getPlayers(currentGame)).sort((a,b) => (b.points||0)-(a.points||0) || ((b.gf||0)-(b.ga||0))-((a.gf||0)-(a.ga||0)));
+      if (!players.length) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:40px;">Aucune équipe inscrite</td></tr>';
+        return;
+      }
+      tbody.innerHTML = players.map((p,i) => {
+        const j = (p.wins||0)+(p.losses||0)+(p.draws||0);
+        const diff = (p.gf||0)-(p.ga||0);
+        return `<tr ${i<3?'style="background:rgba(255,215,0,0.04);"':''}>
+          <td style="font-family:'Rajdhani',sans-serif;font-size:20px;">${medals[i]||i+1}</td>
+          <td style="font-weight:700;color:var(--text);">${p.team}</td>
+          <td><span class="id-badge">${p.id}</span></td>
+          <td>${j}</td>
+          <td style="color:var(--green);">${p.wins||0}</td>
+          <td style="color:var(--text3);">${p.draws||0}</td>
+          <td style="color:var(--red);">${p.losses||0}</td>
+          <td>${p.gf||0}</td>
+          <td>${p.ga||0}</td>
+          <td style="color:${diff>=0?'var(--green)':'var(--red)'};">${diff>=0?'+':''}${diff}</td>
+          <td style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--gold);">${p.points||0}</td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="11" style="color:var(--red);padding:20px;">Erreur de chargement</td></tr>';
+    }
+  }
+  load();
+</script>
+</body>
+</html>
